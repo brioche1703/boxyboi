@@ -60,6 +60,10 @@ Game::Game( MainWindow& wnd )
 				std::stringstream msg;
 				msg << "Collision between " << tid0.name() << " and " << tid1.name() << std::endl;
 				OutputDebugStringA( msg.str().c_str() );
+				if (tid0 == tid1) {
+					boxPtrs[0]->SetDestroyed(true);
+					boxPtrs[1]->SetDestroyed(true);
+				}
 			}
 		}
 	};
@@ -75,10 +79,25 @@ void Game::Go()
 	gfx.EndFrame();
 }
 
-void Game::UpdateModel()
-{
+void Game::UpdateModel() {
 	const float dt = ft.Mark();
-	world.Step( dt,8,3 );
+
+	world.Step(dt, 8, 3);
+	CleanModel();
+}
+
+void Game::CleanModel() {
+	if (!world.IsLocked()) {
+		auto it = boxPtrs.begin();
+		while (it != boxPtrs.end()) {
+			if ((*it)->IsDestroyed()) {
+				it = boxPtrs.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
 }
 
 void Game::ComposeFrame()

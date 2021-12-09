@@ -87,6 +87,13 @@ public:
 	{
 		return size;
 	}
+	void SetDestroyed(bool value) {
+		destroyed = value;
+	}
+	bool IsDestroyed() const
+	{
+		return destroyed;
+	}
 	const ColorTrait& GetColorTrait() const
 	{
 		return *pColorTrait;
@@ -105,4 +112,5 @@ private:
 	float size;
 	BodyPtr pBody;
 	std::unique_ptr<ColorTrait> pColorTrait;
+	bool destroyed = false;
 };
