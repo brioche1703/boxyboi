@@ -26,6 +26,7 @@
 #include <typeinfo>
 #include <functional>
 #include <iterator>
+#include <vector>
 
 Game::Game( MainWindow& wnd )
 	:
@@ -60,9 +61,8 @@ Game::Game( MainWindow& wnd )
 				std::stringstream msg;
 				msg << "Collision between " << tid0.name() << " and " << tid1.name() << std::endl;
 				OutputDebugStringA( msg.str().c_str() );
-				if (tid0 == tid1) {
-					boxPtrs[0]->SetDestroyed(true);
-					boxPtrs[1]->SetDestroyed(true);
+				if (tid0 != tid1) {
+					boxPtrs[0]->SetSplit(true);
 				}
 			}
 		}
@@ -84,19 +84,40 @@ void Game::UpdateModel() {
 
 	world.Step(dt, 8, 3);
 	CleanModel();
+	SplitModel();
 }
 
 void Game::CleanModel() {
-	if (!world.IsLocked()) {
-		auto it = boxPtrs.begin();
-		while (it != boxPtrs.end()) {
-			if ((*it)->IsDestroyed()) {
-				it = boxPtrs.erase(it);
-			}
-			else {
-				++it;
+	auto it = boxPtrs.begin();
+	while (it != boxPtrs.end()) {
+		if ((*it)->IsDestroyed()) {
+			it = boxPtrs.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+}
+
+void Game::SplitModel() {
+	for (size_t i = 0; i < boxPtrs.size();  ++i) {
+		if (boxPtrs[i]->IsSplit()) {
+			std::vector<std::unique_ptr<Box>> newBoxes = boxPtrs[i]->GetSplits(bounds, world);
+			if (newBoxes.size() != 0) {
+				for (size_t j = 0; j < newBoxes.size(); ++j) {
+					boxPtrs.emplace_back(std::move(newBoxes[j]));
+				}
+				boxPtrs[i]->SetDestroyed(true);
 			}
 		}
+	}
+
+	if (wnd.kbd.KeyIsPressed(VK_SPACE)) {
+		std::vector<std::unique_ptr<Box>> newBoxes = boxPtrs[0]->GetSplits(bounds, world);
+		for (size_t j = 0; j < newBoxes.size(); ++j) {
+			boxPtrs.emplace_back(std::move(newBoxes[j]));
+		}
+		boxPtrs[0]->SetDestroyed(true);
 	}
 }
 

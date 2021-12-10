@@ -104,3 +104,12 @@ std::unique_ptr<Box> Box::Spawn( float size,const Boundaries& bounds,b2World& wo
 	
 	return std::make_unique<Box>( std::move( pColorTrait ),world,pos,size,ang,linVel,angVel );
 }
+
+std::unique_ptr<Box> Box::Spawn(float size, const Boundaries& bounds, b2World& world, Box& pBox, Vec2& pos) {
+	const auto linVel = Vec2{ pBox.pBody->GetLinearVelocity() };
+	const auto ang = pBox.GetAngle();
+	const auto angVel = pBox.GetAngularVelocity();
+
+	return std::make_unique<Box>(pBox.GetColorTrait().Clone(), world, pos, size, ang, linVel, angVel);
+	return std::unique_ptr<Box>();
+}

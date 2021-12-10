@@ -24,6 +24,7 @@ public:
 	};
 public:
 	static std::unique_ptr<Box> Box::Spawn( float size,const Boundaries& bounds,b2World& world,std::mt19937& rng );
+	std::unique_ptr<Box> Spawn(float size, const Boundaries& bounds, b2World& world, Box& pBox, Vec2& pos);
 	Box( std::unique_ptr<ColorTrait> pColorTrait, b2World& world,const Vec2& pos,
 		float size = 1.0f,float angle = 0.0f,Vec2 linVel = {0.0f,0.0f},float angVel = 0.0f )
 		:
@@ -98,6 +99,35 @@ public:
 	{
 		return *pColorTrait;
 	}
+	void SetSplit(bool value) {
+		split = value;
+	}
+	bool IsSplit() const {
+		return split;
+	}
+	std::vector<std::unique_ptr<Box>> GetSplits(const Boundaries& bounds,b2World& world) {
+		if (size >= minSize) {
+			std::vector<std::unique_ptr<Box>> newBoxes;
+			const auto pos = Vec2{ GetPosition().x, GetPosition().y };
+			const auto newSize = size /= 2.0f;
+
+			Vec2 offsets[4] = {
+				{pos.x - (size / 4.0f) - 0.1f, pos.y - (size / 4.0f) - 0.1f},
+				{pos.x - (size / 4.0f) - 0.1f, pos.y + (size / 4.0f) + 0.1f},
+				{pos.x + (size / 4.0f) + 0.1f, pos.y - (size / 4.0f) - 0.1f},
+				{pos.x + (size / 4.0f) + 0.1f, pos.y + (size / 4.0f) + 0.1f},
+			};
+
+			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[0]));
+			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[1]));
+			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[2]));
+			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[3]));
+
+			return newBoxes;
+		}
+		return {};
+	}
+
 private:
 	static void Init()
 	{
@@ -108,9 +138,11 @@ private:
 		}
 	}
 private:
+	static constexpr float minSize = 0.2f;
 	static IndexedTriangleList<Vec2> model;
 	float size;
 	BodyPtr pBody;
 	std::unique_ptr<ColorTrait> pColorTrait;
 	bool destroyed = false;
+	bool split = false;
 };

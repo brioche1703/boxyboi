@@ -45,6 +45,7 @@ private:
 	/*  User Functions              */
 	/********************************/
 	void CleanModel();
+	void SplitModel();
 
 private:
 	MainWindow& wnd;
@@ -52,8 +53,8 @@ private:
 	/********************************/
 	/*  User Variables              */
 	static constexpr float boundarySize = 10.0f;
-	static constexpr float boxSize = 0.5f;
-	static constexpr int nBoxes = 160;
+	static constexpr float boxSize = 1.0f;
+	static constexpr int nBoxes = 6;
 	std::mt19937 rng = std::mt19937( std::random_device{}() );
 	FrameTimer ft;
 	Pipeline<SolidEffect> pepe;
