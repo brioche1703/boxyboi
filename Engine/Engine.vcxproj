@@ -137,12 +137,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
     <ClInclude Include="BodyPtr.h" />
     <ClInclude Include="Boundaries.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ChiliException.h" />
     <ClInclude Include="ChiliMath.h" />
     <ClInclude Include="ChiliWin.h" />
+    <ClInclude Include="CollisionEventManager.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="Box.h" />
     <ClInclude Include="DefaultGeometryShader.h" />

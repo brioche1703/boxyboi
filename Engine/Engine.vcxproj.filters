@@ -111,6 +111,12 @@
     <ClInclude Include="BodyPtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionEventManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Action.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXErr.cpp">

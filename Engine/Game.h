@@ -30,6 +30,8 @@
 #include "Pipeline.h"
 #include "SolidEffect.h"
 #include <random>
+#include "CollisionEventManager.h"
+#include "Action.h"
 
 class Game
 {
@@ -44,8 +46,8 @@ private:
 	/********************************/
 	/*  User Functions              */
 	/********************************/
-	void CleanModel();
-	void SplitModel();
+	void SplitBox(int index);
+	void ProcessModel();
 
 private:
 	MainWindow& wnd;
@@ -55,11 +57,13 @@ private:
 	static constexpr float boundarySize = 10.0f;
 	static constexpr float boxSize = 1.0f;
 	static constexpr int nBoxes = 6;
+	static constexpr float minBoxSize = 0.1f;
 	std::mt19937 rng = std::mt19937( std::random_device{}() );
 	FrameTimer ft;
 	Pipeline<SolidEffect> pepe;
 	b2World world;
 	Boundaries bounds = Boundaries( world,boundarySize );
 	std::vector<std::unique_ptr<Box>> boxPtrs;
+	std::vector<std::unique_ptr<Action>> actionPtrs;
 	/********************************/
 };

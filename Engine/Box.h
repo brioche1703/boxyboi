@@ -22,9 +22,9 @@ public:
 		virtual Color GetColor() const = 0;
 		virtual std::unique_ptr<ColorTrait> Clone() const = 0;
 	};
+
 public:
 	static std::unique_ptr<Box> Box::Spawn( float size,const Boundaries& bounds,b2World& world,std::mt19937& rng );
-	std::unique_ptr<Box> Spawn(float size, const Boundaries& bounds, b2World& world, Box& pBox, Vec2& pos);
 	Box( std::unique_ptr<ColorTrait> pColorTrait, b2World& world,const Vec2& pos,
 		float size = 1.0f,float angle = 0.0f,Vec2 linVel = {0.0f,0.0f},float angVel = 0.0f )
 		:
@@ -88,61 +88,99 @@ public:
 	{
 		return size;
 	}
-	void SetDestroyed(bool value) {
-		destroyed = value;
-	}
-	bool IsDestroyed() const
-	{
-		return destroyed;
-	}
 	const ColorTrait& GetColorTrait() const
 	{
 		return *pColorTrait;
 	}
-	void SetSplit(bool value) {
-		split = value;
+	void SetDestroy(bool value) {
+		destroyed = value;
 	}
-	bool IsSplit() const {
-		return split;
+	bool IsDestroyed() const {
+		return destroyed;
 	}
-	std::vector<std::unique_ptr<Box>> GetSplits(const Boundaries& bounds,b2World& world) {
-		if (size >= minSize) {
-			std::vector<std::unique_ptr<Box>> newBoxes;
-			const auto pos = Vec2{ GetPosition().x, GetPosition().y };
-			const auto newSize = size /= 2.0f;
+	void AssumeColorTrait(std::unique_ptr<ColorTrait> pColorTrait) {
+		pColorTrait = std::move(pColorTrait);
+	}
+	std::vector<std::unique_ptr<Box>> Box::GetSplits(b2World& world);
 
-			Vec2 offsets[4] = {
-				{pos.x - (size / 4.0f) - 0.1f, pos.y - (size / 4.0f) - 0.1f},
-				{pos.x - (size / 4.0f) - 0.1f, pos.y + (size / 4.0f) + 0.1f},
-				{pos.x + (size / 4.0f) + 0.1f, pos.y - (size / 4.0f) - 0.1f},
-				{pos.x + (size / 4.0f) + 0.1f, pos.y + (size / 4.0f) + 0.1f},
-			};
-
-			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[0]));
-			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[1]));
-			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[2]));
-			newBoxes.emplace_back(Box::Spawn(newSize, bounds, world, *this, offsets[3]));
-
-			return newBoxes;
+	private:
+		static void Init() {
+			if (model.indices.size() == 0) {
+				model.vertices = { { -1.0f,-1.0 },{ 1.0f,-1.0 },{ -1.0f,1.0 },{ 1.0f,1.0 } };
+				model.indices = { 0,1,2, 1,2,3 };
+			}
 		}
-		return {};
-	}
-
-private:
-	static void Init()
-	{
-		if( model.indices.size() == 0 )
-		{
-			model.vertices = { { -1.0f,-1.0 },{ 1.0f,-1.0 },{ -1.0f,1.0 },{ 1.0f,1.0 } };
-			model.indices = { 0,1,2, 1,2,3 };
-		}
-	}
-private:
-	static constexpr float minSize = 0.2f;
+	private:
 	static IndexedTriangleList<Vec2> model;
+	static float constexpr minSize = 0.2f;
 	float size;
 	BodyPtr pBody;
 	std::unique_ptr<ColorTrait> pColorTrait;
 	bool destroyed = false;
-	bool split = false;
 };
+
+class RedTrait : public Box::ColorTrait
+{
+public:
+	std::unique_ptr<ColorTrait> Clone() const override
+	{
+		return std::make_unique<RedTrait>();
+	}
+	Color GetColor() const override
+	{
+		return Colors::Red;
+	}
+};
+
+class GreenTrait : public Box::ColorTrait
+{
+public:
+	std::unique_ptr<ColorTrait> Clone() const override
+	{
+		return std::make_unique<GreenTrait>();
+	}
+	Color GetColor() const override
+	{
+		return Colors::Green;
+	}
+};
+
+class BlueTrait : public Box::ColorTrait
+{
+public:
+	std::unique_ptr<ColorTrait> Clone() const override
+	{
+		return std::make_unique<BlueTrait>();
+	}
+	Color GetColor() const override
+	{
+		return Colors::Blue;
+	}
+};
+
+class YellowTrait : public Box::ColorTrait
+{
+public:
+	std::unique_ptr<ColorTrait> Clone() const override
+	{
+		return std::make_unique<YellowTrait>();
+	}
+	Color GetColor() const override
+	{
+		return Colors::Yellow;
+	}
+};
+
+class WhiteTrait : public Box::ColorTrait
+{
+public:
+	std::unique_ptr<ColorTrait> Clone() const override
+	{
+		return std::make_unique<WhiteTrait>();
+	}
+	Color GetColor() const override
+	{
+		return Colors::White;
+	}
+};
+

@@ -42,32 +42,23 @@ Game::Game( MainWindow& wnd )
 		return Box::Spawn( boxSize,bounds,world,rng );
 	} );
 
-	class Listener : public b2ContactListener
-	{
-	public:
-		void BeginContact( b2Contact* contact ) override
-		{
-			b2Body* bodyPtrs[] = { contact->GetFixtureA()->GetBody(),contact->GetFixtureB()->GetBody() };
-			if( bodyPtrs[0]->GetType() == b2BodyType::b2_dynamicBody &&
-				bodyPtrs[1]->GetType() == b2BodyType::b2_dynamicBody )
-			{
-				Box* boxPtrs[] = { 
-					reinterpret_cast<Box*>(bodyPtrs[0]->GetUserData().pointer),
-					reinterpret_cast<Box*>(bodyPtrs[1]->GetUserData().pointer)
-				};
-				auto& tid0 = typeid(boxPtrs[0]->GetColorTrait());
-				auto& tid1 = typeid(boxPtrs[1]->GetColorTrait());
+	static CollisionEventManager mrLister;
 
-				std::stringstream msg;
-				msg << "Collision between " << tid0.name() << " and " << tid1.name() << std::endl;
-				OutputDebugStringA( msg.str().c_str() );
-				if (tid0 != tid1) {
-					boxPtrs[0]->SetSplit(true);
-				}
-			}
-		}
-	};
-	static Listener mrLister;
+	mrLister.Case<YellowTrait, RedTrait>([this](Box& y, Box& r) {
+		actionPtrs.push_back(std::make_unique<Split>(y));
+		});
+
+	mrLister.Case<YellowTrait, WhiteTrait>([this](Box& y, Box& w) {
+		actionPtrs.push_back(std::make_unique<AssumeColor>(w, y.GetColorTrait().Clone()));
+		});
+	mrLister.Case<RedTrait, WhiteTrait>([this](Box& r, Box& w) {
+		actionPtrs.push_back(std::make_unique<AssumeColor>(w, r.GetColorTrait().Clone()));
+		});
+	mrLister.Case<BlueTrait, BlueTrait>([this](Box& b1, Box& b2) {
+		actionPtrs.push_back(std::make_unique<Split>(b1));
+		actionPtrs.push_back(std::make_unique<Split>(b2));
+		});
+
 	world.SetContactListener( &mrLister );
 }
 
@@ -83,42 +74,20 @@ void Game::UpdateModel() {
 	const float dt = ft.Mark();
 
 	world.Step(dt, 8, 3);
-	CleanModel();
-	SplitModel();
+	ProcessModel();
 }
 
-void Game::CleanModel() {
-	auto it = boxPtrs.begin();
-	while (it != boxPtrs.end()) {
-		if ((*it)->IsDestroyed()) {
-			it = boxPtrs.erase(it);
-		}
-		else {
-			++it;
-		}
+void Game::ProcessModel() {
+	for (auto& a : actionPtrs) {
+		a->Do(boxPtrs, world);
 	}
-}
+	actionPtrs.clear();
 
-void Game::SplitModel() {
-	for (size_t i = 0; i < boxPtrs.size();  ++i) {
-		if (boxPtrs[i]->IsSplit()) {
-			std::vector<std::unique_ptr<Box>> newBoxes = boxPtrs[i]->GetSplits(bounds, world);
-			if (newBoxes.size() != 0) {
-				for (size_t j = 0; j < newBoxes.size(); ++j) {
-					boxPtrs.emplace_back(std::move(newBoxes[j]));
-				}
-				boxPtrs[i]->SetDestroyed(true);
-			}
-		}
-	}
+	boxPtrs.erase(
+		std::remove_if(boxPtrs.begin(), boxPtrs.end(), std::mem_fn(&Box::IsDestroyed)),
+		boxPtrs.end()
+	);
 
-	if (wnd.kbd.KeyIsPressed(VK_SPACE)) {
-		std::vector<std::unique_ptr<Box>> newBoxes = boxPtrs[0]->GetSplits(bounds, world);
-		for (size_t j = 0; j < newBoxes.size(); ++j) {
-			boxPtrs.emplace_back(std::move(newBoxes[j]));
-		}
-		boxPtrs[0]->SetDestroyed(true);
-	}
 }
 
 void Game::ComposeFrame()

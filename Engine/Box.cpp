@@ -1,72 +1,6 @@
 #include "Box.h"
 IndexedTriangleList<Vec2> Box::model;
 
-
-class RedTrait : public Box::ColorTrait
-{
-public:
-	std::unique_ptr<ColorTrait> Clone() const override
-	{
-		return std::make_unique<RedTrait>();
-	}
-	Color GetColor() const override
-	{
-		return Colors::Red;
-	}
-};
-
-class GreenTrait : public Box::ColorTrait
-{
-public:
-	std::unique_ptr<ColorTrait> Clone() const override
-	{
-		return std::make_unique<GreenTrait>();
-	}
-	Color GetColor() const override
-	{
-		return Colors::Green;
-	}
-};
-
-class BlueTrait : public Box::ColorTrait
-{
-public:
-	std::unique_ptr<ColorTrait> Clone() const override
-	{
-		return std::make_unique<BlueTrait>();
-	}
-	Color GetColor() const override
-	{
-		return Colors::Blue;
-	}
-};
-
-class YellowTrait : public Box::ColorTrait
-{
-public:
-	std::unique_ptr<ColorTrait> Clone() const override
-	{
-		return std::make_unique<YellowTrait>();
-	}
-	Color GetColor() const override
-	{
-		return Colors::Yellow;
-	}
-};
-
-class WhiteTrait : public Box::ColorTrait
-{
-public:
-	std::unique_ptr<ColorTrait> Clone() const override
-	{
-		return std::make_unique<WhiteTrait>();
-	}
-	Color GetColor() const override
-	{
-		return Colors::White;
-	}
-};
-
 std::unique_ptr<Box> Box::Spawn( float size,const Boundaries& bounds,b2World& world,std::mt19937& rng )
 {
 	std::uniform_real_distribution<float> pos_dist(
@@ -105,11 +39,24 @@ std::unique_ptr<Box> Box::Spawn( float size,const Boundaries& bounds,b2World& wo
 	return std::make_unique<Box>( std::move( pColorTrait ),world,pos,size,ang,linVel,angVel );
 }
 
-std::unique_ptr<Box> Box::Spawn(float size, const Boundaries& bounds, b2World& world, Box& pBox, Vec2& pos) {
-	const auto linVel = Vec2{ pBox.pBody->GetLinearVelocity() };
-	const auto ang = pBox.GetAngle();
-	const auto angVel = pBox.GetAngularVelocity();
+std::vector<std::unique_ptr<Box>> Box::GetSplits(b2World& world) {
+	std::vector<std::unique_ptr<Box>> newBoxes;
 
-	return std::make_unique<Box>(pBox.GetColorTrait().Clone(), world, pos, size, ang, linVel, angVel);
-	return std::unique_ptr<Box>();
+	const auto linVel = GetVelocity();
+	const auto pos = GetPosition();
+	const auto ang = GetAngle();
+	const auto angVel = GetAngularVelocity();
+
+	const Vec2 base = (Vec2{ 0.5f, 0.5f } *size) *= Mat2::Rotation(ang);
+
+	for (size_t i = 0; i < 4; ++i) {
+		newBoxes.push_back(std::make_unique<Box>(
+			GetColorTrait().Clone(), world,
+			base * Mat2::Rotation((float)i * PI / 2.0f) + pos,
+			size / 2.0f, ang, linVel, angVel
+			));
+	}
+
+	SetDestroy(true);
+	return newBoxes;
 }
